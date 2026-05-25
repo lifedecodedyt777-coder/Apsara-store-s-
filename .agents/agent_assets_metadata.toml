@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "O1hc6qC8DVOyEhxi_JAra"
+uri = "file://artifacts/apsara-store/src/assets/product-serum.png"
+type = "image"
+title = "Vitamin C Serum"
+
+[[generated]]
+id = "QllWO6U0jPTyBA4mEXvQv"
+uri = "file://artifacts/apsara-store/src/assets/product-cream.png"
+type = "image"
+title = "Moisturizing Cream"
+
+[[generated]]
+id = "FZNZzMvjG_YzkfBjtkk0v"
+uri = "file://artifacts/apsara-store/src/assets/product-shampoo.png"
+type = "image"
+title = "Premium Shampoo"
+
+[[generated]]
+id = "Exi_Uh7Axg4Ak1kPODery"
+uri = "file://artifacts/apsara-store/src/assets/product-lipstick.png"
+type = "image"
+title = "Red Lipstick"
+
+[[generated]]
+id = "7jS1BVFQvdgDMubrDvPDA"
+uri = "file://artifacts/apsara-store/src/assets/product-fragrance.png"
+type = "image"
+title = "Elegant Fragrance"
+
+[[generated]]
+id = "f__JRyt2PXYuhDc3_Rfkz"
+uri = "file://artifacts/apsara-store/src/assets/product-facewash.png"
+type = "image"
+title = "Face Wash"
+
+[[generated]]
+id = "QUJhctoXE7AK4_9-vylhY"
+uri = "file://artifacts/apsara-store/src/assets/gallery-interior.png"
+type = "image"
+title = "Store Interior"
+
+[[generated]]
+id = "4_ev-s209c5D97gKy2g-o"
+uri = "file://artifacts/apsara-store/src/assets/gallery-flatlay.png"
+type = "image"
+title = "Product Flat-lay"
+
+[[generated]]
+id = "rt8Rtwkk-qqybhZwx0WvM"
+uri = "file://artifacts/apsara-store/src/assets/gallery-lifestyle.png"
+type = "image"
+title = "Lifestyle Glow"
+
+[[generated]]
+id = "GE0cl_KQxVcXoZdEyfUPp"
+uri = "file://artifacts/apsara-store/src/assets/gallery-packaging.png"
+type = "image"
+title = "Elegant Packaging"

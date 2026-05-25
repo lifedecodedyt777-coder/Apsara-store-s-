@@ -1,0 +1,109 @@
+Create a premium, modern, high-converting business website demo for a cosmetics and personal care shop named “Apsara Store” in Shindkheda, Gujarat, India.
+
+The website must feel like a real brand launch, not a college project and not a generic template. It should look expensive, clean, cool, trustworthy, and visually memorable. The design must be distinct from ordinary small business websites.
+
+Business context:
+- Brand name: Apsara Store
+- Category: Beauty, cosmetics, personal care, skincare, haircare, grooming, fragrance, and beauty accessories
+- Location: Shindkheda, Gujarat, India
+- Contact: use the visible phone number from the provided profile screenshot
+- Audience: local customers, beauty shoppers, women and men looking for cosmetics, self-care, grooming, and trusted product guidance
+- Tone: premium, friendly, elegant, local, confident
+
+Design direction:
+- Style: luxury editorial + modern retail + subtle glassmorphism
+- Mood: clean, premium, polished, minimal, sharp
+- Avoid: childish colors, clutter, generic stock-business layout, loud gradients, cheap-looking card designs, and crowded sections
+- Use strong typography, generous whitespace, soft shadows, rounded corners, elegant spacing, and subtle motion
+- Use a refined palette: black, ivory, warm beige, blush, muted rose, and a small gold accent
+- Make it feel like a premium beauty brand with local trust
+- Mobile-first, fast, responsive, accessible, and conversion-focused
+
+Technical direction:
+- Build as a modern responsive website using a clean component-based architecture
+- If code is generated, use Next.js + React + Tailwind CSS + Framer Motion + shadcn/ui + Lucide icons
+- Use SEO-friendly structure, semantic HTML, performance optimization, and image lazy-loading
+- Make the site easy to extend later into a real store website with products, categories, and offers
+
+Homepage structure:
+1. Hero section
+   - Large elegant headline
+   - Subheadline about premium cosmetics and trusted beauty products in Shindkheda
+   - Primary CTA: WhatsApp Now
+   - Secondary CTA: Explore Products
+   - Add trust chips like “Original Products”, “Local Service”, “Beauty Experts”, “Fast Support”
+   - Add a stylish product/lifestyle visual composition, not a boring hero
+
+2. Featured categories section
+   - Skincare
+   - Haircare
+   - Makeup
+   - Personal Care
+   - Grooming
+   - Fragrance
+   - Beauty Tools
+   - Gifts & Combo Packs
+   Present them as premium category cards with icons and short benefit text
+
+3. Best sellers / trending products section
+   - Show a curated product grid with clean product cards
+   - Add product name, short benefit, price placeholder, rating, and quick action button
+   - Make the cards feel like a high-end beauty store catalog
+
+4. Why Apsara Store section
+   - Authentic products
+   - Trusted local reputation
+   - Helpful product guidance
+   - Premium range for different budgets
+   - In-store and WhatsApp assistance
+   - Fast response and customer support
+
+5. Social proof / Instagram-inspired section
+   - Add a visually rich reel/gallery section inspired by the Instagram content style
+   - Include store moments, product demos, packaging, and customer interactions
+   - Make this section dynamic and social, but still premium and clean
+
+6. Offers / highlights section
+   - Show limited-time offers, combo deals, seasonal beauty picks, and special discounts
+   - Use sleek announcement banners instead of loud sale graphics
+
+7. Testimonials section
+   - Add realistic customer review cards
+   - Keep reviews believable, short, and local-trust oriented
+
+8. Location and contact section
+   - Show shop address, phone number, WhatsApp button, opening hours, and a map embed placeholder
+   - Make contact extremely easy and visible
+   - Add a strong final call to action
+
+9. Footer
+   - Quick links, categories, contact details, social links, and a short brand statement
+
+Visual details:
+- Use soft animated entrance effects and smooth hover transitions
+- Add subtle parallax or gradient motion only if it stays elegant
+- Use premium photography framing and card layouts
+- No clutter, no excessive animations, no neon effects
+- Keep everything refined and modern
+
+Content style:
+- Write crisp, confident, conversion-focused copy
+- Make the text feel like a real business website
+- Avoid lorem ipsum
+- Use realistic beauty-store language
+- Optional: add small Hindi supporting lines where it improves local trust, but keep the main UI polished and easy to read
+
+Important business goal:
+This demo must instantly impress the client and make them feel the website can realistically be built into a full working business site in 2 to 4 days. The demo should communicate premium branding, trust, and professionalism.
+
+Extra requirements:
+- Add sticky header with logo, categories, and contact button
+- Add search or quick category navigation
+- Add WhatsApp floating button on mobile
+- Add a clean “About Apsara Store” section
+- Add an Instagram/social section
+- Add a polished “Shop by Concern” or “Shop by Need” section for skin, hair, glow, repair, and daily care
+- Add subtle premium micro-interactions
+- Make the final result look like a real, expensive storefront on the web
+
+Create the page with world-class spacing, modern retail aesthetics, and a strong premium brand feel.
