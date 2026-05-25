@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "O1hc6qC8DVOyEhxi_JAra"
@@ -60,3 +59,9 @@ id = "GE0cl_KQxVcXoZdEyfUPp"
 uri = "file://artifacts/apsara-store/src/assets/gallery-packaging.png"
 type = "image"
 title = "Elegant Packaging"
+
+[[outputs]]
+id = "3u1YHQhqLB9Jms8l0F3Y4"
+uri = "file://apsara-store-project.tar.gz"
+type = "unspecified"
+title = "Apsara Store — Full Project Archive"
