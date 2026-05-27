@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
-import { MapPin, Phone, Clock, Instagram } from "lucide-react";
+import { MapPin, Phone, Clock, Instagram, Navigation } from "lucide-react";
 import { buildWhatsAppContactUrl } from "@/lib/whatsapp";
+
+const MAPS_URL =
+  "https://maps.google.com/?q=Apsara+Store+Near+Tahesil+Office+Veterinary+Hospital+Shindkheda+Sindkheda+425406+Maharashtra";
 
 export function Contact() {
   return (
@@ -14,9 +17,12 @@ export function Contact() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-3xl md:text-4xl font-serif font-medium text-foreground mb-4">Visit Apsara Store</h2>
+              <h2 className="text-3xl md:text-4xl font-serif font-medium text-foreground mb-4">
+                Visit Apsara Store
+              </h2>
               <p className="text-muted-foreground mb-10 text-sm leading-relaxed">
-                Step in for personalised beauty advice or reach out on WhatsApp for quick deliveries within Shindkheda.
+                Step in for personalised beauty advice or reach out on WhatsApp for quick
+                deliveries within Shindkheda.
               </p>
 
               <div className="space-y-6 mb-10">
@@ -26,7 +32,21 @@ export function Contact() {
                   </div>
                   <div>
                     <h4 className="font-medium text-foreground text-sm">Address</h4>
-                    <p className="text-muted-foreground text-sm mt-1">Shindkheda, Gujarat, India</p>
+                    <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
+                      Near Tahesil Office &amp; Veterinary Hospital,<br />
+                      Shindkheda (Sindkheda),<br />
+                      Dhule District, Maharashtra – 425406
+                    </p>
+                    <a
+                      href={MAPS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-accent mt-2 hover:underline"
+                      data-testid="link-contact-directions"
+                    >
+                      <Navigation className="h-3 w-3" />
+                      Open in Google Maps
+                    </a>
                   </div>
                 </div>
 
@@ -51,7 +71,11 @@ export function Contact() {
                   </div>
                   <div>
                     <h4 className="font-medium text-foreground text-sm">Opening Hours</h4>
-                    <p className="text-muted-foreground text-sm mt-1">Monday – Sunday<br />9:00 AM – 9:00 PM</p>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      Monday – Sunday
+                      <br />
+                      9:00 AM – 9:00 PM
+                    </p>
                   </div>
                 </div>
 
@@ -88,18 +112,22 @@ export function Contact() {
 
           <div className="lg:w-1/2 min-h-[360px] bg-muted relative">
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[#E5E3DF]">
-              <MapPin className="h-12 w-12 text-accent mb-4 opacity-50" />
+              <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mb-4">
+                <MapPin className="h-8 w-8 text-accent" />
+              </div>
               <p className="font-serif text-2xl text-foreground/80 mb-2">Find Us in Shindkheda</p>
-              <p className="text-muted-foreground text-sm max-w-xs">
-                We are centrally located in Shindkheda, Gujarat. Use Google Maps for precise directions.
+              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed mb-2">
+                Near Tahesil Office &amp; Veterinary Hospital,
+                <br />
+                Shindkheda, Dhule Dist., Maharashtra 425406
               </p>
               <a
-                href="https://maps.google.com/?q=Shindkheda+Gujarat+India"
+                href={MAPS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 inline-flex items-center text-sm font-medium text-primary border-b border-primary pb-1 hover:opacity-80 transition-opacity"
-                data-testid="link-contact-directions"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary border-b border-primary pb-1 hover:opacity-80 transition-opacity"
               >
+                <Navigation className="h-4 w-4" />
                 Get Directions on Google Maps
               </a>
             </div>

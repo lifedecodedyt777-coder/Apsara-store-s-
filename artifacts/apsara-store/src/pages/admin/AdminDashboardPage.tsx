@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import {
   useGetProducts,
@@ -25,7 +25,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +49,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, LogOut, Search, Eye, EyeOff, ExternalLink } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  LogOut,
+  Search,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Upload,
+  X,
+  ImageIcon,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type ProductFormData = {
@@ -76,7 +94,12 @@ const emptyProductForm: ProductFormData = {
   sortOrder: "0",
 };
 
-type CategoryFormData = { name: string; slug: string; description: string; sortOrder: string };
+type CategoryFormData = {
+  name: string;
+  slug: string;
+  description: string;
+  sortOrder: string;
+};
 const emptyCategoryForm: CategoryFormData = { name: "", slug: "", description: "", sortOrder: "0" };
 
 function slugify(str: string) {
@@ -107,6 +130,122 @@ function categoryToFormData(c: Category): CategoryFormData {
     description: c.description ?? "",
     sortOrder: String(c.sortOrder),
   };
+}
+
+function ImageUploadField({
+  imageUrl,
+  onImageUrlChange,
+}: {
+  imageUrl: string;
+  onImageUrlChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [urlMode, setUrlMode] = useState(!imageUrl || imageUrl.startsWith("http"));
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const token = localStorage.getItem("admin_token");
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = (await res.json()) as { url: string };
+      onImageUrlChange(data.url);
+      setUrlMode(false);
+    } catch {
+      setUploadError("Upload failed. Try again or paste a URL instead.");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label>Product Image</Label>
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+          onClick={() => setUrlMode((v) => !v)}
+        >
+          {urlMode ? "Upload file instead" : "Paste URL instead"}
+        </button>
+      </div>
+
+      {urlMode ? (
+        <Input
+          value={imageUrl}
+          onChange={(e) => onImageUrlChange(e.target.value)}
+          placeholder="https://example.com/product.jpg"
+          data-testid="input-product-image-url"
+        />
+      ) : (
+        <div
+          className="relative border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent/60 hover:bg-muted/30 transition-colors"
+          onClick={() => fileRef.current?.click()}
+        >
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleFileChange}
+            data-testid="input-product-image-file"
+          />
+          {uploading ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-muted-foreground">Uploading…</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Click to upload <span className="font-medium text-foreground">JPG, PNG, WebP</span>
+              </span>
+              <span className="text-xs text-muted-foreground">Max 10 MB</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {uploadError && (
+        <p className="text-xs text-red-600">{uploadError}</p>
+      )}
+
+      {imageUrl && (
+        <div className="relative inline-block">
+          <img
+            src={imageUrl}
+            alt="Preview"
+            className="h-24 w-24 rounded-lg object-cover bg-muted border border-border"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => onImageUrlChange("")}
+            className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:opacity-80"
+            aria-label="Remove image"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function AdminDashboardPage() {
@@ -187,31 +326,63 @@ export function AdminDashboardPage() {
   }
 
   function saveProduct() {
-    if (!productForm.name.trim()) { setFormError("Product name is required."); return; }
-    if (!productForm.price || isNaN(Number(productForm.price))) { setFormError("Valid price is required."); return; }
+    if (!productForm.name.trim()) {
+      setFormError("Product name is required.");
+      return;
+    }
+    if (!productForm.price || isNaN(Number(productForm.price))) {
+      setFormError("Valid price is required.");
+      return;
+    }
     setFormError("");
     setIsSaving(true);
 
     const data = buildProductInput();
 
     if (productDialog === "add") {
-      createProduct.mutate({ data }, {
-        onSuccess: () => { invalidateAll(); setProductDialog(null); setIsSaving(false); },
-        onError: () => { setFormError("Failed to save. Please try again."); setIsSaving(false); },
-      });
+      createProduct.mutate(
+        { data },
+        {
+          onSuccess: () => {
+            invalidateAll();
+            setProductDialog(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setFormError("Failed to save. Please try again.");
+            setIsSaving(false);
+          },
+        },
+      );
     } else if (editingProduct) {
-      updateProduct.mutate({ id: editingProduct.id, data }, {
-        onSuccess: () => { invalidateAll(); setProductDialog(null); setIsSaving(false); },
-        onError: () => { setFormError("Failed to save. Please try again."); setIsSaving(false); },
-      });
+      updateProduct.mutate(
+        { id: editingProduct.id, data },
+        {
+          onSuccess: () => {
+            invalidateAll();
+            setProductDialog(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setFormError("Failed to save. Please try again.");
+            setIsSaving(false);
+          },
+        },
+      );
     }
   }
 
   function confirmDeleteProduct() {
     if (!deleteProductId) return;
-    deleteProduct.mutate({ id: deleteProductId }, {
-      onSuccess: () => { invalidateAll(); setDeleteProductId(null); },
-    });
+    deleteProduct.mutate(
+      { id: deleteProductId },
+      {
+        onSuccess: () => {
+          invalidateAll();
+          setDeleteProductId(null);
+        },
+      },
+    );
   }
 
   function openAddCategory() {
@@ -229,8 +400,14 @@ export function AdminDashboardPage() {
   }
 
   function saveCategory() {
-    if (!categoryForm.name.trim()) { setFormError("Category name is required."); return; }
-    if (!categoryForm.slug.trim()) { setFormError("Slug is required."); return; }
+    if (!categoryForm.name.trim()) {
+      setFormError("Category name is required.");
+      return;
+    }
+    if (!categoryForm.slug.trim()) {
+      setFormError("Slug is required.");
+      return;
+    }
     setFormError("");
     setIsSaving(true);
 
@@ -242,32 +419,49 @@ export function AdminDashboardPage() {
     };
 
     if (categoryDialog === "add") {
-      createCategory.mutate({ data }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-          setCategoryDialog(null); setIsSaving(false);
+      createCategory.mutate(
+        { data },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
+            setCategoryDialog(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setFormError("Failed to save. Please try again.");
+            setIsSaving(false);
+          },
         },
-        onError: () => { setFormError("Failed to save. Please try again."); setIsSaving(false); },
-      });
+      );
     } else if (editingCategory) {
-      updateCategory.mutate({ id: editingCategory.id, data }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-          setCategoryDialog(null); setIsSaving(false);
+      updateCategory.mutate(
+        { id: editingCategory.id, data },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
+            setCategoryDialog(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setFormError("Failed to save. Please try again.");
+            setIsSaving(false);
+          },
         },
-        onError: () => { setFormError("Failed to save. Please try again."); setIsSaving(false); },
-      });
+      );
     }
   }
 
   function confirmDeleteCategory() {
     if (!deleteCategoryId) return;
-    deleteCategory.mutate({ id: deleteCategoryId }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-        setDeleteCategoryId(null);
+    deleteCategory.mutate(
+      { id: deleteCategoryId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
+          setDeleteCategoryId(null);
+        },
       },
-    });
+    );
   }
 
   return (
@@ -276,11 +470,18 @@ export function AdminDashboardPage() {
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="font-serif text-xl font-semibold text-foreground">Apsara Store</span>
-            <Badge variant="secondary" className="text-xs">Admin</Badge>
+            <Badge variant="secondary" className="text-xs">
+              Admin
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <a href="/" target="_blank" rel="noopener noreferrer" data-testid="link-view-site">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="link-view-site"
+              >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 View Site
               </a>
@@ -315,8 +516,12 @@ export function AdminDashboardPage() {
 
         <Tabs defaultValue="products">
           <TabsList className="mb-6">
-            <TabsTrigger value="products" data-testid="tab-products">Products</TabsTrigger>
-            <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+            <TabsTrigger value="products" data-testid="tab-products">
+              Products
+            </TabsTrigger>
+            <TabsTrigger value="categories" data-testid="tab-categories">
+              Categories
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -340,10 +545,13 @@ export function AdminDashboardPage() {
 
               {productsLoading ? (
                 <div className="p-6 space-y-3">
-                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">
+                  <ImageIcon className="h-10 w-10 mx-auto mb-3 opacity-30" />
                   <p className="font-serif text-lg mb-1">No products yet</p>
                   <p className="text-sm">Click "Add Product" to get started.</p>
                 </div>
@@ -352,60 +560,109 @@ export function AdminDashboardPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Product</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Category</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Price</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Status</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                          Product
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
+                          Category
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                          Price
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">
+                          Status
+                        </th>
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {filteredProducts.map((product) => (
-                        <tr key={product.id} className="hover:bg-muted/20 transition-colors" data-testid={`row-product-${product.id}`}>
+                        <tr
+                          key={product.id}
+                          className="hover:bg-muted/20 transition-colors"
+                          data-testid={`row-product-${product.id}`}
+                        >
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              {product.imageUrl && (
+                              {product.imageUrl ? (
                                 <img
                                   src={product.imageUrl}
                                   alt={product.name}
                                   className="h-10 w-10 rounded-md object-cover bg-muted shrink-0"
                                 />
+                              ) : (
+                                <div className="h-10 w-10 rounded-md bg-muted shrink-0 flex items-center justify-center">
+                                  <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
+                                </div>
                               )}
                               <div>
-                                <p className="font-medium text-foreground leading-tight">{product.name}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">{product.shortDescription}</p>
+                                <p className="font-medium text-foreground leading-tight">
+                                  {product.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {product.shortDescription}
+                                </p>
                               </div>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                             {product.categoryId ? categoryMap.get(product.categoryId) ?? "—" : "—"}
                           </td>
-                          <td className="px-4 py-3 font-medium text-foreground">₹{product.price}</td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <span className="font-semibold text-foreground">
+                                ₹{product.price}
+                              </span>
+                              {product.comparePrice && (
+                                <span className="ml-2 text-xs text-muted-foreground line-through">
+                                  ₹{product.comparePrice}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 hidden sm:table-cell">
                             <div className="flex flex-wrap gap-1">
-                              {product.featured && <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent border-none">Featured</Badge>}
-                              {product.bestSeller && <Badge variant="secondary" className="text-xs">Best Seller</Badge>}
-                              {!product.inStock && <Badge variant="destructive" className="text-xs">Out of Stock</Badge>}
+                              {product.featured && (
+                                <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent border-none">
+                                  Featured
+                                </Badge>
+                              )}
+                              {product.bestSeller && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Best Seller
+                                </Badge>
+                              )}
+                              {!product.inStock && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Out of Stock
+                                </Badge>
+                              )}
                               {!product.visible && (
                                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                   <EyeOff className="h-3 w-3" /> Hidden
                                 </span>
                               )}
-                              {product.visible && product.inStock && !product.featured && !product.bestSeller && (
-                                <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                                  <Eye className="h-3 w-3" /> Visible
-                                </span>
-                              )}
+                              {product.visible &&
+                                product.inStock &&
+                                !product.featured &&
+                                !product.bestSeller && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                                    <Eye className="h-3 w-3" /> Visible
+                                  </span>
+                                )}
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => openEditProduct(product)}
                                 data-testid={`button-edit-product-${product.id}`}
+                                title="Edit product"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -415,6 +672,7 @@ export function AdminDashboardPage() {
                                 className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                                 onClick={() => setDeleteProductId(product.id)}
                                 data-testid={`button-delete-product-${product.id}`}
+                                title="Delete product"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -443,7 +701,9 @@ export function AdminDashboardPage() {
 
               {categoriesLoading ? (
                 <div className="p-6 space-y-3">
-                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
                 </div>
               ) : (categories ?? []).length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">
@@ -454,44 +714,64 @@ export function AdminDashboardPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Description</th>
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Order</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                          Name
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">
+                          Slug
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
+                          Description
+                        </th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                          Order
+                        </th>
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {[...(categories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
-                        <tr key={cat.id} className="hover:bg-muted/20 transition-colors" data-testid={`row-category-${cat.id}`}>
-                          <td className="px-4 py-3 font-medium text-foreground">{cat.name}</td>
-                          <td className="px-4 py-3 text-muted-foreground font-mono text-xs hidden sm:table-cell">{cat.slug}</td>
-                          <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{cat.description ?? "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => openEditCategory(cat)}
-                                data-testid={`button-edit-category-${cat.id}`}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                onClick={() => setDeleteCategoryId(cat.id)}
-                                data-testid={`button-delete-category-${cat.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {[...(categories ?? [])]
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((cat) => (
+                          <tr
+                            key={cat.id}
+                            className="hover:bg-muted/20 transition-colors"
+                            data-testid={`row-category-${cat.id}`}
+                          >
+                            <td className="px-4 py-3 font-medium text-foreground">{cat.name}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-mono text-xs hidden sm:table-cell">
+                              {cat.slug}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                              {cat.description ?? "—"}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => openEditCategory(cat)}
+                                  data-testid={`button-edit-category-${cat.id}`}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                  onClick={() => setDeleteCategoryId(cat.id)}
+                                  data-testid={`button-delete-category-${cat.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -502,7 +782,12 @@ export function AdminDashboardPage() {
       </main>
 
       {/* Product Dialog */}
-      <Dialog open={productDialog !== null} onOpenChange={(open) => { if (!open) setProductDialog(null); }}>
+      <Dialog
+        open={productDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setProductDialog(null);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl">
@@ -510,10 +795,12 @@ export function AdminDashboardPage() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-5 py-2">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="pname">Product Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="pname">
+                  Product Name <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="pname"
                   value={productForm.name}
@@ -534,7 +821,9 @@ export function AdminDashboardPage() {
                   <SelectContent>
                     <SelectItem value="none">No Category</SelectItem>
                     {(categories ?? []).map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -546,7 +835,9 @@ export function AdminDashboardPage() {
               <Input
                 id="pshortdesc"
                 value={productForm.shortDescription}
-                onChange={(e) => setProductForm({ ...productForm, shortDescription: e.target.value })}
+                onChange={(e) =>
+                  setProductForm({ ...productForm, shortDescription: e.target.value })
+                }
                 placeholder="One-line benefit description"
                 data-testid="input-product-short-desc"
               />
@@ -564,14 +855,17 @@ export function AdminDashboardPage() {
               />
             </div>
 
+            {/* Price row */}
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="pprice">Price (₹) <span className="text-red-500">*</span></Label>
+                <Label htmlFor="pprice">
+                  Selling Price (₹) <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="pprice"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={productForm.price}
                   onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                   placeholder="299"
@@ -579,14 +873,16 @@ export function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcompareprice">Compare Price (₹)</Label>
+                <Label htmlFor="pcompareprice">MRP / Compare Price (₹)</Label>
                 <Input
                   id="pcompareprice"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={productForm.comparePrice}
-                  onChange={(e) => setProductForm({ ...productForm, comparePrice: e.target.value })}
+                  onChange={(e) =>
+                    setProductForm({ ...productForm, comparePrice: e.target.value })
+                  }
                   placeholder="399"
                   data-testid="input-product-compare-price"
                 />
@@ -604,26 +900,14 @@ export function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="pimageurl">Image URL</Label>
-              <Input
-                id="pimageurl"
-                value={productForm.imageUrl}
-                onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                placeholder="https://example.com/product.jpg"
-                data-testid="input-product-image"
-              />
-              {productForm.imageUrl && (
-                <img
-                  src={productForm.imageUrl}
-                  alt="Preview"
-                  className="h-20 w-20 rounded-lg object-cover bg-muted border border-border"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
-              )}
-            </div>
+            {/* Image upload */}
+            <ImageUploadField
+              imageUrl={productForm.imageUrl}
+              onImageUrlChange={(url) => setProductForm({ ...productForm, imageUrl: url })}
+            />
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+            {/* Toggles */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
               {(
                 [
                   { key: "featured", label: "Featured" },
@@ -632,7 +916,10 @@ export function AdminDashboardPage() {
                   { key: "visible", label: "Visible" },
                 ] as const
               ).map(({ key, label }) => (
-                <div key={key} className="flex flex-col items-start gap-2 p-3 rounded-lg border border-border bg-muted/20">
+                <div
+                  key={key}
+                  className="flex flex-col items-start gap-2 p-3 rounded-lg border border-border bg-muted/20"
+                >
                   <Label className="text-xs text-muted-foreground">{label}</Label>
                   <Switch
                     checked={productForm[key]}
@@ -649,16 +936,31 @@ export function AdminDashboardPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setProductDialog(null)}>Cancel</Button>
-            <Button onClick={saveProduct} disabled={isSaving} data-testid="button-save-product">
-              {isSaving ? "Saving..." : productDialog === "add" ? "Add Product" : "Save Changes"}
+            <Button variant="outline" onClick={() => setProductDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveProduct}
+              disabled={isSaving}
+              data-testid="button-save-product"
+            >
+              {isSaving
+                ? "Saving…"
+                : productDialog === "add"
+                  ? "Add Product"
+                  : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Category Dialog */}
-      <Dialog open={categoryDialog !== null} onOpenChange={(open) => { if (!open) setCategoryDialog(null); }}>
+      <Dialog
+        open={categoryDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setCategoryDialog(null);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl">
@@ -668,7 +970,9 @@ export function AdminDashboardPage() {
 
           <div className="grid gap-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="cname">Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="cname">
+                Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="cname"
                 value={categoryForm.name}
@@ -685,11 +989,15 @@ export function AdminDashboardPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cslug">Slug <span className="text-red-500">*</span></Label>
+              <Label htmlFor="cslug">
+                Slug <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="cslug"
                 value={categoryForm.slug}
-                onChange={(e) => setCategoryForm({ ...categoryForm, slug: slugify(e.target.value) })}
+                onChange={(e) =>
+                  setCategoryForm({ ...categoryForm, slug: slugify(e.target.value) })
+                }
                 placeholder="e.g. skincare"
                 className="font-mono text-sm"
                 data-testid="input-category-slug"
@@ -700,50 +1008,71 @@ export function AdminDashboardPage() {
               <Input
                 id="cdesc"
                 value={categoryForm.description}
-                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                onChange={(e) =>
+                  setCategoryForm({ ...categoryForm, description: e.target.value })
+                }
                 placeholder="Short description"
-                data-testid="input-category-description"
+                data-testid="input-category-desc"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="csort">Sort Order</Label>
+              <Label htmlFor="csortorder">Sort Order</Label>
               <Input
-                id="csort"
+                id="csortorder"
                 type="number"
                 value={categoryForm.sortOrder}
-                onChange={(e) => setCategoryForm({ ...categoryForm, sortOrder: e.target.value })}
+                onChange={(e) =>
+                  setCategoryForm({ ...categoryForm, sortOrder: e.target.value })
+                }
                 placeholder="0"
                 data-testid="input-category-sort"
               />
             </div>
+
             {formError && (
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">{formError}</p>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCategoryDialog(null)}>Cancel</Button>
-            <Button onClick={saveCategory} disabled={isSaving} data-testid="button-save-category">
-              {isSaving ? "Saving..." : categoryDialog === "add" ? "Add Category" : "Save Changes"}
+            <Button variant="outline" onClick={() => setCategoryDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveCategory}
+              disabled={isSaving}
+              data-testid="button-save-category"
+            >
+              {isSaving
+                ? "Saving…"
+                : categoryDialog === "add"
+                  ? "Add Category"
+                  : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Product Confirm */}
-      <AlertDialog open={deleteProductId !== null} onOpenChange={(open) => { if (!open) setDeleteProductId(null); }}>
+      <AlertDialog
+        open={deleteProductId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteProductId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>Delete Product?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the product. This action cannot be undone.
+              This will permanently remove the product from your store. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
               onClick={confirmDeleteProduct}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete-product"
             >
               Delete
@@ -753,19 +1082,25 @@ export function AdminDashboardPage() {
       </AlertDialog>
 
       {/* Delete Category Confirm */}
-      <AlertDialog open={deleteCategoryId !== null} onOpenChange={(open) => { if (!open) setDeleteCategoryId(null); }}>
+      <AlertDialog
+        open={deleteCategoryId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCategoryId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogTitle>Delete Category?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the category. Products assigned to it will remain but become uncategorised.
+              This will permanently remove the category. Products in this category will not be
+              deleted but will lose their category assignment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
               onClick={confirmDeleteCategory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="button-confirm-delete-category"
             >
               Delete
