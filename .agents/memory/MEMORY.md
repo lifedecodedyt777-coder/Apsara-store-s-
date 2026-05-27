@@ -1,0 +1,3 @@
+- [Drizzle date serialization](drizzle-date-serialization.md) — Drizzle returns Date objects; never use Zod response schemas on DB output, serialize dates manually with .toISOString()
+- [Orval query enabled pattern](orval-enabled-pattern.md) — When passing `enabled` to a generated useGet* hook, you MUST also pass `queryKey: getGet*QueryKey(...)` or TypeScript fails with TS2741
+- [Admin auth pattern](admin-auth-pattern.md) — Use setAuthTokenGetter() from @workspace/api-client-react at app root; admin token stored in localStorage; SESSION_SECRET used as JWT secret
