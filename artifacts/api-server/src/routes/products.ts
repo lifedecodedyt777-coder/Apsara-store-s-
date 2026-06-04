@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { eq, and, asc, desc } from "drizzle-orm";
 import { db, productsTable, type Product } from "@workspace/db";
 import {
@@ -22,7 +22,7 @@ function serializeProduct(p: Product) {
   };
 }
 
-router.get("/", async (req, res): Promise<void> => {
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   const query = GetProductsQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
@@ -59,7 +59,7 @@ router.get("/", async (req, res): Promise<void> => {
   res.json(products.map(serializeProduct));
 });
 
-router.post("/", adminAuth, async (req, res): Promise<void> => {
+router.post("/", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const parsed = CreateProductBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -74,7 +74,7 @@ router.post("/", adminAuth, async (req, res): Promise<void> => {
   res.status(201).json(serializeProduct(product));
 });
 
-router.get("/:id", async (req, res): Promise<void> => {
+router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   const params = GetProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -94,7 +94,7 @@ router.get("/:id", async (req, res): Promise<void> => {
   res.json(serializeProduct(product));
 });
 
-router.patch("/:id", adminAuth, async (req, res): Promise<void> => {
+router.patch("/:id", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const params = UpdateProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -121,7 +121,7 @@ router.patch("/:id", adminAuth, async (req, res): Promise<void> => {
   res.json(serializeProduct(product));
 });
 
-router.delete("/:id", adminAuth, async (req, res): Promise<void> => {
+router.delete("/:id", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const params = DeleteProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
