@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { eq, asc } from "drizzle-orm";
 import { db, categoriesTable, type Category } from "@workspace/db";
 import {
@@ -20,7 +20,7 @@ function serializeCategory(c: Category) {
   };
 }
 
-router.get("/", async (req, res): Promise<void> => {
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   const categories = await db
     .select()
     .from(categoriesTable)
@@ -28,7 +28,7 @@ router.get("/", async (req, res): Promise<void> => {
   res.json(categories.map(serializeCategory));
 });
 
-router.post("/", adminAuth, async (req, res): Promise<void> => {
+router.post("/", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const parsed = CreateCategoryBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -43,7 +43,7 @@ router.post("/", adminAuth, async (req, res): Promise<void> => {
   res.status(201).json(serializeCategory(category));
 });
 
-router.get("/:id", async (req, res): Promise<void> => {
+router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   const params = GetCategoryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -63,7 +63,7 @@ router.get("/:id", async (req, res): Promise<void> => {
   res.json(serializeCategory(category));
 });
 
-router.patch("/:id", adminAuth, async (req, res): Promise<void> => {
+router.patch("/:id", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const params = UpdateCategoryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -90,7 +90,7 @@ router.patch("/:id", adminAuth, async (req, res): Promise<void> => {
   res.json(serializeCategory(category));
 });
 
-router.delete("/:id", adminAuth, async (req, res): Promise<void> => {
+router.delete("/:id", adminAuth, async (req: Request, res: Response): Promise<void> => {
   const params = DeleteCategoryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
