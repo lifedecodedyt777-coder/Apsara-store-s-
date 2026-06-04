@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -11,8 +11,8 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 }
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (_req, file, cb) => {
+  destination: (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => cb(null, UPLOAD_DIR),
+  filename: (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const name = `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
     cb(null, name);
@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
@@ -34,7 +34,7 @@ const upload = multer({
 
 const router: IRouter = Router();
 
-router.post("/", adminAuth, upload.single("image"), (req, res) => {
+router.post("/", adminAuth, upload.single("image"), (req: Request, res: Response): void => {
   if (!req.file) {
     res.status(400).json({ error: "No image file provided" });
     return;
