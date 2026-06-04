@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -34,13 +34,17 @@ const upload = multer({
 
 const router: IRouter = Router();
 
-router.post("/", adminAuth, upload.single("image"), (req: Request, res: Response): void => {
-  if (!req.file) {
-    res.status(400).json({ error: "No image file provided" });
-    return;
+router.post("/", adminAuth, upload.single("image"), (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No image file provided" });
+      return;
+    }
+    const url = `/api/uploads/${req.file.filename}`;
+    res.json({ url });
+  } catch (err) {
+    next(err);
   }
-  const url = `/api/uploads/${req.file.filename}`;
-  res.json({ url });
 });
 
 export default router;
