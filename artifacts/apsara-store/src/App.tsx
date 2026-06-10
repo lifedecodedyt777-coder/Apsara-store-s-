@@ -1,4 +1,4 @@
-﻿import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +23,7 @@ import { ProductsPage } from "@/pages/ProductsPage";
 import { ProductDetailPage } from "@/pages/ProductDetailPage";
 import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
-import { BeforeAfterAdminPage } from './pages/admin/BeforeAfterAdminPage';
+import BeforeAfterAdminPage from './pages/admin/BeforeAfterAdminPage';
 
 // Initialize auth token getter from localStorage on app load
 setAuthTokenGetter(() => localStorage.getItem("admin_token"));
