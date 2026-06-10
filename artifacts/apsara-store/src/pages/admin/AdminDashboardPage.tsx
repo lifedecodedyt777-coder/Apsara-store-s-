@@ -1,4 +1,4 @@
-﻿import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -192,7 +192,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-muted-foreground">Uploadingâ€¦</span>
+              <span className="text-sm text-muted-foreground">Uploading…</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -468,6 +468,7 @@ export function AdminDashboardPage() {
             <TabsTrigger value="categories" data-testid="tab-categories">
               Categories
             </TabsTrigger>
+          <TabsTrigger value="results" onClick={() => { window.location.href = "/admin/results"; }}>Before / After</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -554,16 +555,16 @@ export function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "â€”" : "â€”"}
+                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "—" : "—"}
                           </td>
                           <td className="px-4 py-3">
                             <div>
                               <span className="font-semibold text-foreground">
-                                â‚¹{product.price}
+                                ₹{product.price}
                               </span>
                               {product.comparePrice && (
                                 <span className="ml-2 text-xs text-muted-foreground line-through">
-                                  â‚¹{product.comparePrice}
+                                  ₹{product.comparePrice}
                                 </span>
                               )}
                             </div>
@@ -691,7 +692,7 @@ export function AdminDashboardPage() {
                               {cat.slug}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                              {cat.description ?? "â€”"}
+                              {cat.description ?? "—"}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
                             <td className="px-4 py-3">
@@ -805,7 +806,7 @@ export function AdminDashboardPage() {
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pprice">
-                  Selling Price (â‚¹) <span className="text-red-500">*</span>
+                  Selling Price (₹) <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="pprice"
@@ -819,7 +820,7 @@ export function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcompareprice">MRP / Compare Price (â‚¹)</Label>
+                <Label htmlFor="pcompareprice">MRP / Compare Price (₹)</Label>
                 <Input
                   id="pcompareprice"
                   type="number"
@@ -891,7 +892,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-product"
             >
               {isSaving
-                ? "Savingâ€¦"
+                ? "Saving…"
                 : productDialog === "add"
                   ? "Add Product"
                   : "Save Changes"}
@@ -990,7 +991,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-category"
             >
               {isSaving
-                ? "Savingâ€¦"
+                ? "Saving…"
                 : categoryDialog === "add"
                   ? "Add Category"
                   : "Save Changes"}
