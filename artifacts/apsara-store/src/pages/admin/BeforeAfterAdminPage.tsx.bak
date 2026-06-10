@@ -1,0 +1,147 @@
+﻿import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+
+interface BAResult {
+  id: string; concern: string; before_image: string; after_image: string;
+  duration_weeks: number; product_used: string; sort_order: number; visible: boolean;
+}
+const empty = { concern:"", before_image:"", after_image:"", duration_weeks:4, product_used:"", sort_order:1, visible:true };
+
+export function BeforeAfterAdminPage() {
+  const [items, setItems] = useState<BAResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialog, setDialog] = useState<"add"|"edit"|null>(null);
+  const [editing, setEditing] = useState<BAResult|null>(null);
+  const [form, setForm] = useState(empty);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = () => {
+    supabase.from("before_after_results").select("*").order("sort_order")
+      .then(({ data }) => { setItems(data ?? []); setLoading(false); });
+  };
+  useEffect(() => { load(); }, []);
+
+  const openAdd = () => { setForm(empty); setEditing(null); setError(""); setDialog("add"); };
+  const openEdit = (item: BAResult) => {
+    setForm({ concern:item.concern, before_image:item.before_image, after_image:item.after_image,
+      duration_weeks:item.duration_weeks, product_used:item.product_used, sort_order:item.sort_order, visible:item.visible });
+    setEditing(item); setError(""); setDialog("edit");
+  };
+  const save = async () => {
+    if (!form.concern.trim()||!form.before_image.trim()||!form.after_image.trim()) {
+      setError("Concern, before image URL, and after image URL are required."); return;
+    }
+    setSaving(true);
+    if (dialog==="add") {
+      const { error:e } = await supabase.from("before_after_results").insert([form]);
+      if (e) { setError(e.message); setSaving(false); return; }
+    } else if (editing) {
+      const { error:e } = await supabase.from("before_after_results").update(form).eq("id", editing.id);
+      if (e) { setError(e.message); setSaving(false); return; }
+    }
+    setSaving(false); setDialog(null); load();
+  };
+  const del = async (id: string) => {
+    if (!confirm("Delete this result?")) return;
+    await supabase.from("before_after_results").delete().eq("id", id);
+    load();
+  };
+
+  const inp: React.CSSProperties = { width:"100%", border:"1px solid #ddd", borderRadius:8, padding:"10px 12px", fontSize:14, boxSizing:"border-box" as any };
+  const lbl: React.CSSProperties = { display:"block", fontSize:11, fontWeight:700, color:"#777", marginBottom:4, textTransform:"uppercase" as any, letterSpacing:"0.06em" };
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#faf8f5", padding:"24px 16px" }}>
+      <div style={{ maxWidth:700, margin:"0 auto" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+          <div>
+            <a href="/admin/dashboard" style={{ fontSize:12, color:"#888", textDecoration:"none" }}>← Back to Dashboard</a>
+            <h1 style={{ fontFamily:"Georgia,serif", fontSize:26, margin:"4px 0 0", color:"#1a1a1a" }}>Before & After Results</h1>
+          </div>
+          <button onClick={openAdd} style={{ background:"#c9a84c", color:"#fff", border:"none", borderRadius:8, padding:"11px 20px", cursor:"pointer", fontWeight:700, fontSize:14 }}>+ Add Result</button>
+        </div>
+
+        <div style={{ background:"#fff8e7", border:"1px solid #f0d9a0", borderRadius:10, padding:"12px 16px", marginBottom:20, fontSize:13, color:"#7a5c00" }}>
+          💡 <strong>How to add images:</strong> Upload your photo to <a href="https://imgbb.com" target="_blank" rel="noreferrer" style={{ color:"#c9a84c" }}>imgbb.com</a> (free), copy the Direct Link, paste it below.
+        </div>
+
+        {loading ? <p style={{ color:"#888" }}>Loading...</p> : items.length===0 ? (
+          <div style={{ textAlign:"center", padding:"60px 20px", color:"#aaa", background:"#fff", borderRadius:12 }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🖼️</div>
+            <p style={{ fontFamily:"Georgia,serif", fontSize:18, color:"#555", margin:"0 0 6px" }}>No results yet</p>
+            <p style={{ fontSize:13 }}>Click "Add Result" to create your first before/after comparison</p>
+          </div>
+        ) : (
+          <div style={{ display:"grid", gap:10 }}>
+            {items.map(item => (
+              <div key={item.id} style={{ background:"#fff", border:"1px solid #f0ebe3", borderRadius:12, padding:"14px 16px", display:"flex", alignItems:"center", gap:14 }}>
+                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                  <img src={item.before_image} alt="Before" style={{ width:52, height:52, objectFit:"cover", borderRadius:6, border:"2px solid #ddd" }} onError={e=>{(e.currentTarget as HTMLImageElement).src="https://via.placeholder.com/52x52?text=B";}}/>
+                  <img src={item.after_image} alt="After" style={{ width:52, height:52, objectFit:"cover", borderRadius:6, border:"2px solid #c9a84c" }} onError={e=>{(e.currentTarget as HTMLImageElement).src="https://via.placeholder.com/52x52?text=A";}}/>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:700, fontSize:14, color:"#1a1a1a" }}>{item.concern}</div>
+                  <div style={{ fontSize:12, color:"#777", marginTop:2 }}>{item.product_used} · {item.duration_weeks} weeks</div>
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={()=>openEdit(item)} style={{ background:"#f5f0ea", border:"none", borderRadius:6, padding:"7px 14px", cursor:"pointer", fontWeight:600, fontSize:13 }}>Edit</button>
+                  <button onClick={()=>del(item.id)} style={{ background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:6, padding:"7px 14px", cursor:"pointer", fontWeight:600, fontSize:13 }}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {dialog && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+          <div style={{ background:"#fff", borderRadius:16, padding:24, width:"100%", maxWidth:480, maxHeight:"90vh", overflowY:"auto" }}>
+            <h3 style={{ margin:"0 0 18px", fontFamily:"Georgia,serif", fontSize:20 }}>{dialog==="add"?"Add New":"Edit"} Result</h3>
+            {error && <div style={{ background:"#fee2e2", color:"#dc2626", padding:"10px 14px", borderRadius:8, marginBottom:14, fontSize:13 }}>{error}</div>}
+            {[
+              { label:"Concern / Category", key:"concern", placeholder:"e.g. Acne & Blemishes" },
+              { label:"Before Image URL", key:"before_image", placeholder:"https://imgbb.com/your-before-image" },
+              { label:"After Image URL", key:"after_image", placeholder:"https://imgbb.com/your-after-image" },
+              { label:"Product Used", key:"product_used", placeholder:"e.g. Niacinamide Serum" },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom:14 }}>
+                <label style={lbl}>{f.label}</label>
+                <input type="text" value={(form as any)[f.key]} placeholder={f.placeholder}
+                  onChange={e=>setForm({...form,[f.key]:e.target.value})} style={inp}/>
+              </div>
+            ))}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
+              <div>
+                <label style={lbl}>Duration (weeks)</label>
+                <input type="number" value={form.duration_weeks} onChange={e=>setForm({...form,duration_weeks:Number(e.target.value)})} style={inp}/>
+              </div>
+              <div>
+                <label style={lbl}>Sort Order</label>
+                <input type="number" value={form.sort_order} onChange={e=>setForm({...form,sort_order:Number(e.target.value)})} style={inp}/>
+              </div>
+            </div>
+            {(form.before_image||form.after_image) && (
+              <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+                {form.before_image && <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:11, color:"#888", marginBottom:4 }}>BEFORE</div>
+                  <img src={form.before_image} alt="preview" style={{ width:80, height:80, objectFit:"cover", borderRadius:8, border:"1px solid #ddd" }} onError={e=>{(e.currentTarget as HTMLImageElement).style.display="none";}}/>
+                </div>}
+                {form.after_image && <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:11, color:"#888", marginBottom:4 }}>AFTER</div>
+                  <img src={form.after_image} alt="preview" style={{ width:80, height:80, objectFit:"cover", borderRadius:8, border:"1px solid #c9a84c" }} onError={e=>{(e.currentTarget as HTMLImageElement).style.display="none";}}/>
+                </div>}
+              </div>
+            )}
+            <div style={{ display:"flex", gap:10 }}>
+              <button onClick={()=>setDialog(null)} style={{ flex:1, padding:"11px", border:"1px solid #ddd", borderRadius:8, background:"#fff", cursor:"pointer", fontWeight:600 }}>Cancel</button>
+              <button onClick={save} disabled={saving} style={{ flex:2, padding:"11px", background:"#1a1a1a", color:"#fff", border:"none", borderRadius:8, cursor:"pointer", fontWeight:700 }}>
+                {saving?"Saving...":"Save Result"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

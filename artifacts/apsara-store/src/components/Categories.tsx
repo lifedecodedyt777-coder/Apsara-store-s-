@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { Droplets, Sparkles, Paintbrush, Heart, Scissors, Wind, PenTool, Gift } from "lucide-react";
 
 const categories = [
@@ -45,3 +45,5 @@ export function Categories() {
     </section>
   );
 }
+
+

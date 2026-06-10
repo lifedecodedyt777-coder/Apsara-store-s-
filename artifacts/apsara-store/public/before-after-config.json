@@ -1,0 +1,6 @@
+﻿[
+  {"id":1,"label":"Acne Transformation","concern":"Acne & Blemishes","beforeImage":"/results/acne-before.jpg","afterImage":"/results/acne-after.jpg","durationWeeks":4,"productUsed":"Niacinamide 10% Serum + Salicylic Cleanser"},
+  {"id":2,"label":"Glow Boost","concern":"Dullness & Glow","beforeImage":"/results/glow-before.jpg","afterImage":"/results/glow-after.jpg","durationWeeks":3,"productUsed":"Vitamin C Serum + Glow Moisturiser"},
+  {"id":3,"label":"Hair Fall Control","concern":"Hair Fall","beforeImage":"/results/hair-before.jpg","afterImage":"/results/hair-after.jpg","durationWeeks":6,"productUsed":"Onion Hair Oil + Biotin Shampoo"},
+  {"id":4,"label":"Deep Hydration","concern":"Dryness","beforeImage":"/results/dry-before.jpg","afterImage":"/results/dry-after.jpg","durationWeeks":2,"productUsed":"Hyaluronic Acid Serum + Deep Moisture Cream"}
+]

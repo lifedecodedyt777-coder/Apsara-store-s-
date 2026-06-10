@@ -1,21 +1,7 @@
-import { useState, useRef } from "react";
+﻿import { supabase } from '../../lib/supabase';
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import {
-  useGetProducts,
-  useGetCategories,
-  useCreateProduct,
-  useUpdateProduct,
-  useDeleteProduct,
-  useCreateCategory,
-  useUpdateCategory,
-  useDeleteCategory,
-  getGetProductsQueryKey,
-  getGetCategoriesQueryKey,
-  type Product,
-  type Category,
-  type ProductInput,
-  type CategoryInput,
-} from "@workspace/api-client-react";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -206,7 +192,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-muted-foreground">Uploading…</span>
+              <span className="text-sm text-muted-foreground">Uploadingâ€¦</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -253,15 +239,20 @@ export function AdminDashboardPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  const { data: products, isLoading: productsLoading } = useGetProducts({ visible: "all" });
-  const { data: categories, isLoading: categoriesLoading } = useGetCategories();
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  useEffect(() => {
+    supabase.from("products").select("*").order("sortOrder", { ascending: true })
+      .then(({ data }) => { setProducts(data ?? []); setProductsLoading(false); });
+  }, []);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  useEffect(() => {
+    supabase.from("categories").select("*").order("sortOrder", { ascending: true })
+      .then(({ data }) => { setCategories(data ?? []); setCategoriesLoading(false); });
+  }, []);
 
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
-  const createCategory = useCreateCategory();
-  const updateCategory = useUpdateCategory();
-  const deleteCategory = useDeleteCategory();
+
 
   const [productSearch, setProductSearch] = useState("");
   const [productDialog, setProductDialog] = useState<"add" | "edit" | null>(null);
@@ -277,9 +268,9 @@ export function AdminDashboardPage() {
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const categoryMap = new Map((categories ?? []).map((c) => [c.id, c.name]));
+  const categoryMap = new Map((Array.isArray(categories) ? categories : []).map((c) => [c.id, c.name]));
 
-  const filteredProducts = (products ?? []).filter((p) =>
+  const filteredProducts = (Array.isArray(products) ? products : []).filter((p) =>
     p.name.toLowerCase().includes(productSearch.toLowerCase()),
   );
 
@@ -289,9 +280,8 @@ export function AdminDashboardPage() {
   }
 
   function invalidateAll() {
-    queryClient.invalidateQueries({ queryKey: getGetProductsQueryKey() });
-    queryClient.invalidateQueries({ queryKey: getGetProductsQueryKey({ featured: true }) });
-    queryClient.invalidateQueries({ queryKey: getGetProductsQueryKey({ visible: "all" }) });
+    supabase.from('products').select('*').order('sortOrder',{ascending:true}).then(({data})=>setProducts(data??[]));
+    supabase.from('categories').select('*').order('sortOrder',{ascending:true}).then(({data})=>setCategories(data??[]));
   }
 
   function openAddProduct() {
@@ -325,7 +315,7 @@ export function AdminDashboardPage() {
     };
   }
 
-  function saveProduct() {
+  async function saveProduct() {
     if (!productForm.name.trim()) {
       setFormError("Product name is required.");
       return;
@@ -340,49 +330,29 @@ export function AdminDashboardPage() {
     const data = buildProductInput();
 
     if (productDialog === "add") {
-      createProduct.mutate(
-        { data },
-        {
-          onSuccess: () => {
-            invalidateAll();
-            setProductDialog(null);
-            setIsSaving(false);
-          },
-          onError: () => {
-            setFormError("Failed to save. Please try again.");
-            setIsSaving(false);
-          },
-        },
-      );
+      const { error } = await supabase.from('products').insert([data]);
+      if (error) {
+        setFormError("Failed to save: " + error.message);
+        setIsSaving(false);
+        return;
+      }
+      invalidateAll();
+      setProductDialog(null);
+      setIsSaving(false);
     } else if (editingProduct) {
-      updateProduct.mutate(
-        { id: editingProduct.id, data },
-        {
-          onSuccess: () => {
-            invalidateAll();
-            setProductDialog(null);
-            setIsSaving(false);
-          },
-          onError: () => {
-            setFormError("Failed to save. Please try again.");
-            setIsSaving(false);
-          },
-        },
-      );
+      const { error: upErr } = await supabase.from('products').update(data).eq('id', editingProduct.id);
+      if (upErr) { setFormError('Failed to save. Please try again.'); setIsSaving(false); return; }
+      invalidateAll();
+      setProductDialog(null);
+      setIsSaving(false);
     }
   }
 
-  function confirmDeleteProduct() {
+  async function confirmDeleteProduct() {
     if (!deleteProductId) return;
-    deleteProduct.mutate(
-      { id: deleteProductId },
-      {
-        onSuccess: () => {
-          invalidateAll();
-          setDeleteProductId(null);
-        },
-      },
-    );
+    await supabase.from('products').delete().eq('id', deleteProductId);
+    invalidateAll();
+    setDeleteProductId(null);
   }
 
   function openAddCategory() {
@@ -399,7 +369,7 @@ export function AdminDashboardPage() {
     setCategoryDialog("edit");
   }
 
-  function saveCategory() {
+  async function saveCategory() {
     if (!categoryForm.name.trim()) {
       setFormError("Category name is required.");
       return;
@@ -419,49 +389,25 @@ export function AdminDashboardPage() {
     };
 
     if (categoryDialog === "add") {
-      createCategory.mutate(
-        { data },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-            setCategoryDialog(null);
-            setIsSaving(false);
-          },
-          onError: () => {
-            setFormError("Failed to save. Please try again.");
-            setIsSaving(false);
-          },
-        },
-      );
+      const { error: catErr } = await supabase.from('categories').insert([data]);
+      if (catErr) { setFormError('Failed to save. Please try again.'); setIsSaving(false); return; }
+      invalidateAll();
+      setCategoryDialog(null);
+      setIsSaving(false);
     } else if (editingCategory) {
-      updateCategory.mutate(
-        { id: editingCategory.id, data },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-            setCategoryDialog(null);
-            setIsSaving(false);
-          },
-          onError: () => {
-            setFormError("Failed to save. Please try again.");
-            setIsSaving(false);
-          },
-        },
-      );
+      const { error: catUpErr } = await supabase.from('categories').update(data).eq('id', editingCategory.id);
+      if (catUpErr) { setFormError('Failed to save. Please try again.'); setIsSaving(false); return; }
+      invalidateAll();
+      setCategoryDialog(null);
+      setIsSaving(false);
     }
   }
 
-  function confirmDeleteCategory() {
+  async function confirmDeleteCategory() {
     if (!deleteCategoryId) return;
-    deleteCategory.mutate(
-      { id: deleteCategoryId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetCategoriesQueryKey() });
-          setDeleteCategoryId(null);
-        },
-      },
-    );
+    await supabase.from('categories').delete().eq('id', deleteCategoryId);
+    invalidateAll();
+    setDeleteCategoryId(null);
   }
 
   return (
@@ -503,8 +449,8 @@ export function AdminDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Total Products", value: products?.length ?? 0 },
-            { label: "Visible", value: products?.filter((p) => p.visible).length ?? 0 },
-            { label: "Featured", value: products?.filter((p) => p.featured).length ?? 0 },
+            { label: "Visible", value: (Array.isArray(products) ? products : []).filter((p) => p.visible).length ?? 0 },
+            { label: "Featured", value: (Array.isArray(products) ? products : []).filter((p) => p.featured).length ?? 0 },
             { label: "Categories", value: categories?.length ?? 0 },
           ].map((stat) => (
             <div key={stat.label} className="bg-background rounded-xl border border-border p-5">
@@ -608,16 +554,16 @@ export function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "—" : "—"}
+                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "â€”" : "â€”"}
                           </td>
                           <td className="px-4 py-3">
                             <div>
                               <span className="font-semibold text-foreground">
-                                ₹{product.price}
+                                â‚¹{product.price}
                               </span>
                               {product.comparePrice && (
                                 <span className="ml-2 text-xs text-muted-foreground line-through">
-                                  ₹{product.comparePrice}
+                                  â‚¹{product.comparePrice}
                                 </span>
                               )}
                             </div>
@@ -705,7 +651,7 @@ export function AdminDashboardPage() {
                     <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
-              ) : (categories ?? []).length === 0 ? (
+              ) : (Array.isArray(categories) ? categories : []).length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">
                   <p className="font-serif text-lg">No categories yet</p>
                 </div>
@@ -732,7 +678,7 @@ export function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {[...(categories ?? [])]
+                      {[...(Array.isArray(categories) ? categories : [])]
                         .sort((a, b) => a.sortOrder - b.sortOrder)
                         .map((cat) => (
                           <tr
@@ -745,7 +691,7 @@ export function AdminDashboardPage() {
                               {cat.slug}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                              {cat.description ?? "—"}
+                              {cat.description ?? "â€”"}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
                             <td className="px-4 py-3">
@@ -820,7 +766,7 @@ export function AdminDashboardPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No Category</SelectItem>
-                    {(categories ?? []).map((c) => (
+                    {(Array.isArray(categories) ? categories : []).map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.name}
                       </SelectItem>
@@ -859,7 +805,7 @@ export function AdminDashboardPage() {
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pprice">
-                  Selling Price (₹) <span className="text-red-500">*</span>
+                  Selling Price (â‚¹) <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="pprice"
@@ -873,7 +819,7 @@ export function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcompareprice">MRP / Compare Price (₹)</Label>
+                <Label htmlFor="pcompareprice">MRP / Compare Price (â‚¹)</Label>
                 <Input
                   id="pcompareprice"
                   type="number"
@@ -945,7 +891,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-product"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : productDialog === "add"
                   ? "Add Product"
                   : "Save Changes"}
@@ -1044,7 +990,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-category"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : categoryDialog === "add"
                   ? "Add Category"
                   : "Save Changes"}
@@ -1111,3 +1057,12 @@ export function AdminDashboardPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

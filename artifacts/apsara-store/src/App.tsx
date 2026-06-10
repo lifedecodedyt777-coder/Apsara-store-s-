@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+﻿import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,11 +16,14 @@ import { About } from "@/components/About";
 import { Gallery } from "@/components/Gallery";
 import { Offers } from "@/components/Offers";
 import { Contact } from "@/components/Contact";
+import AnnouncementBar from "@/components/AnnouncementBar";
+import BeforeAfterSection from "@/components/BeforeAfterSection";
 import { CategoriesPage } from "@/pages/CategoriesPage";
 import { ProductsPage } from "@/pages/ProductsPage";
 import { ProductDetailPage } from "@/pages/ProductDetailPage";
 import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { BeforeAfterAdminPage } from './pages/admin/BeforeAfterAdminPage';
 
 // Initialize auth token getter from localStorage on app load
 setAuthTokenGetter(() => localStorage.getItem("admin_token"));
@@ -37,12 +40,14 @@ const queryClient = new QueryClient({
 function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-accent/30">
+      <AnnouncementBar />
       <Header />
       <main className="flex-1">
         <Hero />
         <Categories />
         <BestSellers />
         <Concerns />
+        <BeforeAfterSection />
         <Offers />
         <WhyUs />
         <About />
@@ -74,6 +79,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/admin" component={AdminRoute} />
       <Route path="/admin/dashboard" component={ProtectedAdminDashboard} />
+        <Route path="/admin/results" component={BeforeAfterAdminPage}/>
       <Route component={NotFound} />
     </Switch>
   );
@@ -93,3 +99,4 @@ function App() {
 }
 
 export default App;
+
