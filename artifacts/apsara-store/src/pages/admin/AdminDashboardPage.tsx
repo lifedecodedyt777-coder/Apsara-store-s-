@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+﻿import { supabase } from '../../lib/supabase';
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -136,17 +136,14 @@ function ImageUploadField({
     setUploading(true);
     setUploadError("");
     try {
-      const token = localStorage.getItem("admin_token");
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/uploads", {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = (await res.json()) as { url: string };
-      onImageUrlChange(data.url);
+      const ext = file.name.split(".").pop();
+      const fileName = `${Date.now()}.${ext}`;
+      const { data, error } = await supabase.storage
+        .from("products")
+        .upload(fileName, file, { upsert: true });
+      if (error) throw new Error(error.message);
+      const { data: urlData } = supabase.storage.from("products").getPublicUrl(data.path);
+      onImageUrlChange(urlData.publicUrl);
       setUrlMode(false);
     } catch {
       setUploadError("Upload failed. Try again or paste a URL instead.");
@@ -192,7 +189,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-muted-foreground">Uploading…</span>
+              <span className="text-sm text-muted-foreground">Uploadingâ€¦</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -555,16 +552,16 @@ export function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "—" : "—"}
+                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "â€”" : "â€”"}
                           </td>
                           <td className="px-4 py-3">
                             <div>
                               <span className="font-semibold text-foreground">
-                                ₹{product.price}
+                                â‚¹{product.price}
                               </span>
                               {product.comparePrice && (
                                 <span className="ml-2 text-xs text-muted-foreground line-through">
-                                  ₹{product.comparePrice}
+                                  â‚¹{product.comparePrice}
                                 </span>
                               )}
                             </div>
@@ -692,7 +689,7 @@ export function AdminDashboardPage() {
                               {cat.slug}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                              {cat.description ?? "—"}
+                              {cat.description ?? "â€”"}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
                             <td className="px-4 py-3">
@@ -806,7 +803,7 @@ export function AdminDashboardPage() {
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pprice">
-                  Selling Price (₹) <span className="text-red-500">*</span>
+                  Selling Price (â‚¹) <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="pprice"
@@ -820,7 +817,7 @@ export function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcompareprice">MRP / Compare Price (₹)</Label>
+                <Label htmlFor="pcompareprice">MRP / Compare Price (â‚¹)</Label>
                 <Input
                   id="pcompareprice"
                   type="number"
@@ -892,7 +889,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-product"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : productDialog === "add"
                   ? "Add Product"
                   : "Save Changes"}
@@ -991,7 +988,7 @@ export function AdminDashboardPage() {
               data-testid="button-save-category"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : categoryDialog === "add"
                   ? "Add Category"
                   : "Save Changes"}
@@ -1058,6 +1055,7 @@ export function AdminDashboardPage() {
     </div>
   );
 }
+
 
 
 
