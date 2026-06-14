@@ -302,7 +302,7 @@ export function AdminDashboardPage() {
       description: productForm.description,
       price: Number(productForm.price) || 0,
       comparePrice: productForm.comparePrice ? Number(productForm.comparePrice) : null,
-      categoryId: productForm.categoryId !== "none" ? Number(productForm.categoryId) : null,
+      categoryId: productForm.categoryId !== "none" ? productForm.categoryId : null,
       imageUrl: productForm.imageUrl || null,
       featured: productForm.featured,
       bestSeller: productForm.bestSeller,
@@ -1055,6 +1055,7 @@ export function AdminDashboardPage() {
     </div>
   );
 }
+
 
 
 
