@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff } from "lucide-react";
 
-const ADMIN_PASSWORD = "@apsarastores999";
+const DEFAULT_ADMIN_PASSWORD = "@apsarastores999";
 
 export function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -19,7 +19,9 @@ export function AdminLoginPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (password === ADMIN_PASSWORD) {
+    const savedPassword = localStorage.getItem("admin_password") || DEFAULT_ADMIN_PASSWORD;
+
+    if (password === savedPassword) {
       login("local-admin-token");
       setLocation("/admin/dashboard");
     } else {
@@ -79,3 +81,4 @@ export function AdminLoginPage() {
     </div>
   );
 }
+

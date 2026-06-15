@@ -234,6 +234,11 @@ function ImageUploadField({
 export function AdminDashboardPage() {
   const { logout } = useAdminAuth();
   const [, setLocation] = useLocation();
+
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [passwordLoading, setPasswordLoading] = useState(false);
+const [passwordMessage, setPasswordMessage] = useState("");
   const queryClient = useQueryClient();
 
   const [products, setProducts] = useState<any[]>([]);
@@ -266,6 +271,30 @@ export function AdminDashboardPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const categoryMap = new Map((Array.isArray(categories) ? categories : []).map((c) => [c.id, c.name]));
+
+const handlePasswordChange = async () => {
+  setPasswordMessage("");
+
+  if (!newPassword || !confirmPassword) {
+    setPasswordMessage("Please fill all fields.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setPasswordMessage("Passwords do not match.");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    setPasswordMessage("Password must be at least 6 characters.");
+    return;
+  }
+
+  localStorage.setItem("admin_password", newPassword);
+  setPasswordMessage("Admin password updated successfully.");
+  setNewPassword("");
+  setConfirmPassword("");
+};
 
   const filteredProducts = (Array.isArray(products) ? products : []).filter((p) =>
     p.name.toLowerCase().includes(productSearch.toLowerCase()),
@@ -1052,9 +1081,43 @@ export function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <div className="mt-6 rounded-2xl border border-border bg-background p-5 shadow-sm">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">Change Admin Password</h3>
+          <p className="text-sm text-muted-foreground">Update the admin login password from here.</p>
+        </div>
+        <div className="space-y-3">
+          <input
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          {passwordMessage && <p className="text-sm text-muted-foreground">{passwordMessage}</p>}
+          <button
+            type="button"
+            onClick={handlePasswordChange}
+            disabled={passwordLoading}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {passwordLoading ? "Updating..." : "Update Password"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
+
+
+
 
 
 
