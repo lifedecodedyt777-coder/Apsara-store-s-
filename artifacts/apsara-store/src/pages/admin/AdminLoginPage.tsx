@@ -1,19 +1,12 @@
+﻿import { getAdminPassword } from '@/lib/adminAuth';
 import { useState } from "react";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { useLocation } from "wouter";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Input } from "@/components/ui/input";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Button } from "@/components/ui/button";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Label } from "@/components/ui/label";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Lock, Eye, EyeOff } from "lucide-react";
-import { getAdminPassword } from '@/lib/adminAuth';
 
 
 export function AdminLoginPage() {
@@ -23,7 +16,7 @@ export function AdminLoginPage() {
   const { login } = useAdminAuth();
   const [, setLocation] = useLocation();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     const savedPassword = await getAdminPassword();
@@ -88,5 +81,15 @@ export function AdminLoginPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
