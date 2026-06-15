@@ -1,5 +1,4 @@
-import { supabase } from '../../lib/supabase';
-import { updateAdminPassword } from '../../lib/adminAuth';
+﻿import { supabase } from '../../lib/supabase';
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -190,7 +189,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-muted-foreground">Uploading…</span>
+              <span className="text-sm text-muted-foreground">Uploadingâ€¦</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -291,7 +290,7 @@ const handlePasswordChange = async () => {
     return;
   }
 
-  await updateAdminPassword(newPassword);
+  localStorage.setItem("admin_password", newPassword);
   setPasswordMessage("Admin password updated successfully.");
   setNewPassword("");
   setConfirmPassword("");
@@ -582,16 +581,16 @@ const handlePasswordChange = async () => {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "—" : "—"}
+                            {product.categoryId ? categoryMap.get(product.categoryId) ?? "â€”" : "â€”"}
                           </td>
                           <td className="px-4 py-3">
                             <div>
                               <span className="font-semibold text-foreground">
-                                ₹{product.price}
+                                â‚¹{product.price}
                               </span>
                               {product.comparePrice && (
                                 <span className="ml-2 text-xs text-muted-foreground line-through">
-                                  ₹{product.comparePrice}
+                                  â‚¹{product.comparePrice}
                                 </span>
                               )}
                             </div>
@@ -719,7 +718,7 @@ const handlePasswordChange = async () => {
                               {cat.slug}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                              {cat.description ?? "—"}
+                              {cat.description ?? "â€”"}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">{cat.sortOrder}</td>
                             <td className="px-4 py-3">
@@ -833,7 +832,7 @@ const handlePasswordChange = async () => {
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pprice">
-                  Selling Price (₹) <span className="text-red-500">*</span>
+                  Selling Price (â‚¹) <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="pprice"
@@ -847,7 +846,7 @@ const handlePasswordChange = async () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcompareprice">MRP / Compare Price (₹)</Label>
+                <Label htmlFor="pcompareprice">MRP / Compare Price (â‚¹)</Label>
                 <Input
                   id="pcompareprice"
                   type="number"
@@ -919,7 +918,7 @@ const handlePasswordChange = async () => {
               data-testid="button-save-product"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : productDialog === "add"
                   ? "Add Product"
                   : "Save Changes"}
@@ -1018,7 +1017,7 @@ const handlePasswordChange = async () => {
               data-testid="button-save-category"
             >
               {isSaving
-                ? "Saving…"
+                ? "Savingâ€¦"
                 : categoryDialog === "add"
                   ? "Add Category"
                   : "Save Changes"}
@@ -1116,8 +1115,6 @@ const handlePasswordChange = async () => {
     </div>
   );
 }
-
-
 
 
 

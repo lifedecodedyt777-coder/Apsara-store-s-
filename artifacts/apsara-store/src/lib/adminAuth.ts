@@ -1,0 +1,21 @@
+import { supabase } from "./supabase";
+
+export const getAdminPassword = async (): Promise<string> => {
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .select("admin_password")
+    .eq("id", 1)
+    .single();
+
+  if (error) throw error;
+  return data.admin_password as string;
+};
+
+export const updateAdminPassword = async (newPassword: string): Promise<void> => {
+  const { error } = await supabase
+    .from("admin_settings")
+    .update({ admin_password: newPassword })
+    .eq("id", 1);
+
+  if (error) throw error;
+};

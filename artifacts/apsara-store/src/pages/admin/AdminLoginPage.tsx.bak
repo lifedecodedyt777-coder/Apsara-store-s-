@@ -1,20 +1,13 @@
-import { useState } from "react";
-import { getAdminPassword } from '@/lib/adminAuth';
+﻿import { useState } from "react";
 import { useLocation } from "wouter";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Input } from "@/components/ui/input";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Button } from "@/components/ui/button";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Label } from "@/components/ui/label";
-import { getAdminPassword } from '@/lib/adminAuth';
 import { Lock, Eye, EyeOff } from "lucide-react";
-import { getAdminPassword } from '@/lib/adminAuth';
 
+const DEFAULT_ADMIN_PASSWORD = "@apsarastores999";
 
 export function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -26,10 +19,10 @@ export function AdminLoginPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const savedPassword = await getAdminPassword();
+    const savedPassword = localStorage.getItem("admin_password") || DEFAULT_ADMIN_PASSWORD;
 
     if (password === savedPassword) {
-      login("admin-token");
+      login("local-admin-token");
       setLocation("/admin/dashboard");
     } else {
       setError("Incorrect password. Please try again.");
@@ -88,5 +81,4 @@ export function AdminLoginPage() {
     </div>
   );
 }
-
 
